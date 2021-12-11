@@ -1,15 +1,17 @@
 library(ggm)
-#############################
-# manually input the condition
+############################# 1) change each of selection rule into a condition
 subsets_satisfying_condition <- function(numbers){
   x = c(list(" "), powerset(numbers))
   num = vector(mode = "list", length = 2)
   j=1
   for(i in 1:length(x)){
     if( 
+      # if 4 is selected, then 1 must be selected
       ( (4 %in% x[[i]] && 1 %in% x[[i]]) || !(4 %in% x[[i]]) )&& 
+      # if at least one variable in 2 and 3 is selected, then 1 must be selected
       ( (2 %in% x[[i]] && 1 %in% x[[i]]) || !(2 %in% x[[i]]) )&& 
       ( (3 %in% x[[i]] && 1 %in% x[[i]]) || !(3 %in% x[[i]]) )&& 
+      #
       ( (6 %in% x[[i]] && 1 %in% x[[i]] && 5 %in% x[[i]]) || !(6 %in% x[[i]]) )&& 
       ( (7 %in% x[[i]] && 1 %in% x[[i]] && 4 %in% x[[i]] && 5 %in% x[[i]] && 6 %in% x[[i]]) || !(7 %in% x[[i]]) )&& 
       ( (10 %in% x[[i]] && 1 %in% x[[i]]) || !(10 %in% x[[i]]) )&& 
@@ -30,29 +32,18 @@ k = subsets_satisfying_condition(numbers)
 end_time <- Sys.time()
 end_time - start_time
 # 3.5s
-#k = k[-which(sapply(k, is.null))]
 length(k)
+# 32512
 K=lapply(k,FUN=function(x) c(x,c("19,20,21,22,23,24,25,26,27,28")))
 KK=sapply(K, paste, collapse = ",")
-#KK=lapply(K,FUN=function(x) c(x,c("19, 20")))
 
-
+# write the results in the file
 fileConn<-file("selection dictionary.txt")
 writeLines(KK, fileConn)
 close(fileConn)
-##################################
-
-
-
+         
+################################## 2) use the operation rules developed in (2021, Wang et al. https://arxiv.org/abs/2110.01031)
 # unit function when the unit rule is select all variables in F
-unit=function(F, V){
-  # F is a vector, V is a vector
-  b=powerset(setdiff(V, F), nonempty = FALSE)
-  Result=lapply(b, FUN=function(x) union(F,x))
-  return(Result)}
-
-
-
 sort.list=function(A){
   return(lapply(A, FUN=function(x) sort(x)))
 }
@@ -61,7 +52,24 @@ sort.list=function(A){
 CCL=function(A){
   return(lapply(strsplit(A," "), FUN=function(x) as.numeric(x)))
 }
+ 
+#power set minus a set
+set.difference=function(P,A){
+  A=sort.list(A)
+  P=sort.list(P)
+  AA=sapply(A , paste, collapse = " ")
+  PP=sapply(P , paste, collapse = " ")
+  return(as.list(PP[-which(PP %in% AA)]))
+}
+                
+# unit function
+unit=function(F, V){
+  # F is a vector, V is a vector
+  b=powerset(setdiff(V, F), nonempty = FALSE)
+  Result=lapply(b, FUN=function(x) union(F,x))
+  return(Result)}
 
+# AND opearation
 #intersect.list
 IL=function(A,B){
   A=sort.list(A)
@@ -71,16 +79,7 @@ IL=function(A,B){
   return(as.list(AA[which(AA %in% BB)]))
 }
 
-#power set minus a set
-set.difference=function(P,A){
-  A=sort.list(A)
-  P=sort.list(P)
-  AA=sapply(A , paste, collapse = " ")
-  PP=sapply(P , paste, collapse = " ")
-  return(as.list(PP[-which(PP %in% AA)]))
-}
-
-#if then operation
+#IF THEN operation
 ifthen=function(A,B,V){
   P=powerset(V, nonempty = FALSE)
   C=set.difference(P,A)
@@ -89,8 +88,6 @@ ifthen=function(A,B,V){
   Result=unique(sapply(Result , paste, collapse = " "))
   return(Result)
 }
-
-
 
 #################################################
 V=seq(18)
@@ -109,4 +106,5 @@ M=sapply(IL(IL(IL(IL(IL(IL(IL(IL(a1,a2),a3),a4),
 end_time <- Sys.time()
 end_time - start_time
 length(M)
+# 32512
 # 5 mins
