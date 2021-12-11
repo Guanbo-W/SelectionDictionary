@@ -25,4 +25,3 @@
 17. COPD/asthma
 18. Dyslipidemia
 19-28: Age, History of bleeding, Stroke, Anemia, Sex, Renal diseases, liver diseases, Malignancy, Antiplatelets, NSAIDs
-![image](https://user-images.githubusercontent.com/20359321/145682956-e6227870-5beb-4487-ab5f-44569c474a5b.png)
