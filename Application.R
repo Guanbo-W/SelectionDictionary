@@ -1,15 +1,17 @@
 # Load packages ######################################################################
+devtools::install_github("YaohuiZeng/grpregOverlap")
+library(grpregOverlap)
+require(data.table)
 library(haven)
 library(dplyr)
-require(data.table)
+library(glmnet)
 library(tableone)
+
 set.seed(2019)
 
-# Read data #########################################################################
-# Read the original data
-Data <- read_sas("analyses_jq_v8.sas7bdat")
-dim(Data)[1]
-##################################### names of has_bled
+Data <- read_sas("xxx")
+
+##################################### available variables in HAS-BLED
 names=c("all_major_bleed_fup",
         "bled_renal_3yr_pr_ac","liver","bled_stroke_3yr_pr_ac", "maj_bleed","bled_age_gt_65_ac","bled_drugs_ac")
 data=Data[-which(Data$adherence_hypotens_yr_pr_index %in% NA),which(colnames(Data) %in% names)]
@@ -30,15 +32,14 @@ covariate_names=paste(colnames(data[,-c(7)]),collapse ="+")
 fomula=paste("all_major_bleed_fup",covariate_names,sep ="~")
 round(cbind(exp(coef(glm(fomula,family=binomial(),data=data))),
             exp(confint(glm(fomula,family=binomial(),data=data)))),2)
-##################################### #names of circulation
+
+##################################### available variables in "predictors for bleeding on oral anticoagulation" (2012, Lane and Lip, circulation) 
 names=c("all_major_bleed_fup",
         "age_75_or_more","maj_bleed","bled_stroke_3yr_pr_ac","bled_renal_3yr_pr_ac", "anemia","female","liver","malign_cancer","adherence_hypotens_yr_pr_index", "antiplatel_2w_pr","nsaids_2w_pr","antidiab_2w_pr","antidepre_2w_pr","ppi_2w_pr","antibiotics_2w_pr","anti_arrhythmics_2w_pr","pgp_inhib_2w_pr")
 data=Data[-which(Data$adherence_hypotens_yr_pr_index %in% NA),which(colnames(Data) %in% names)]
 data$Adh=ifelse(data$adherence_hypotens_yr_pr_index<0.8,0,1)
 data$othermedication=ifelse(data$antidiab_2w_pr==1|data$antidepre_2w_pr==1|data$ppi_2w_pr==1|data$antibiotics_2w_pr==1|data$anti_arrhythmics_2w_pr==1|data$pgp_inhib_2w_pr==1,1,0)
 data=data[,-which(colnames(data) %in% c("antidiab_2w_pr","antidepre_2w_pr","ppi_2w_pr","antibiotics_2w_pr","anti_arrhythmics_2w_pr","pgp_inhib_2w_pr","adherence_hypotens_yr_pr_index"))]
-
-
 # crude OR
 result=list();ci=list();est=NULL;covariate_names=NULL
 for (i in c(1:6,8:13)) {
@@ -57,7 +58,7 @@ fomula=paste("all_major_bleed_fup",covariate_names,sep ="~")
 round(cbind(exp(coef(glm(fomula,family=binomial(),data=data))),
             exp(confint(glm(fomula,family=binomial(),data=data)))),2)
 
-######################################### names of full model
+######################################### Our full model
 names=c("all_major_bleed_fup",
         "age_75_or_more","female","bled_stroke_3yr_pr_ac","anemia","liver","malign_cancer","bled_renal_3yr_pr_ac","maj_bleed","antiplatel_2w_pr","nsaids_2w_pr",
         "cha2sds2_vasc_3yr_pr_ac_ge_3",
@@ -107,7 +108,6 @@ round(cbind(exp(coef(glm(fomula,family=binomial(),data=data))),
             exp(confint(glm(fomula,family=binomial(),data=data)))),2)
 
 #############  TableOne
-library(tableone)
 X=as.matrix(data[,-29],)
 y=as.vector(data$all_major_bleed_fup)
 tableone1=CreateTableOne(vars=colnames(X),strata="all_major_bleed_fup",data=data)
@@ -116,9 +116,9 @@ tableone2=CreateTableOne(vars=colnames(data),strata="ddd",data=data)
 data=data[,-30]
 
 ############# Lasso
-library(glmnet)
 lassofit=cv.glmnet(X,y,family = "binomial")
 exp(coef(lassofit, s=lassofit$lambda.min))
+
 ############# AdaLasso
 ridge1_cv=cv.glmnet(X,y,family = "binomial",type.measure = "mse",alpha=0)
 best_ridge_coef=as.numeric(coef(ridge1_cv,s=ridge1_cv$lambda.min))[-1]
@@ -126,15 +126,12 @@ alasso_cv=cv.glmnet(X,y,family = "binomial",type.measure = "mse",alpha=1,penalty
 exp(coef(alasso_cv,s=alasso_cv$lambda.min))
 
 ############# LOGL #############################
-devtools::install_github("YaohuiZeng/grpregOverlap")
-library(grpregOverlap)
-
 group=list(c(3),c(10),c(11),c(12),c(13),
            c(14),c(14, 17),c(14,15),c(14,16),c(18),c(14, 18, 19),c(14, 17, 18, 19, 20),
            c(14, 25),c(14, 26),
            c(23),c(14,23,27),c(24),c(14,24,28),
            c(1,8, 4, 5, 2, 9, 7, 6, 21, 22))
-#oglasso(x = X, y = Y, family="binomial", group = group)
+
 cvfit.grLasso <- cv.grpregOverlap(X, y, group, penalty = 'grLasso', family = 'binomial',trace = TRUE)
 cvfit.grMCP <- cv.grpregOverlap(X, y, group, penalty = 'grMCP', family = 'binomial',trace = TRUE)
 cvfit.grSCAD <- cv.grpregOverlap(X, y, group, penalty = 'grSCAD', family = 'binomial',trace = TRUE)
