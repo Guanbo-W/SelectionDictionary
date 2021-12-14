@@ -131,20 +131,19 @@ group=list(c(3),c(10),c(11),c(12),c(13),
            c(14, 25),c(14, 26),
            c(23),c(14,23,27),c(24),c(14,24,28),
            c(1,8, 4, 5, 2, 9, 7, 6, 21, 22))
+weight=c(rep(1,6),rep(sqrt(2),3),1,sqrt(3),sqrt(5),sqrt(2),sqrt(5),1,sqrt(3),1,sqrt(3),0.000001)
 
-cvfit.grLasso <- cv.grpregOverlap(X, y, group, penalty = 'grLasso', family = 'binomial',trace = TRUE)
-cvfit.grMCP <- cv.grpregOverlap(X, y, group, penalty = 'grMCP', family = 'binomial',trace = TRUE)
-cvfit.grSCAD <- cv.grpregOverlap(X, y, group, penalty = 'grSCAD', family = 'binomial',trace = TRUE)
+cvfit.grLasso <- cv.grpregOverlap(X, y, group, penalty = 'grLasso', group.multiplier=weight, family = 'binomial',trace = TRUE)
+cvfit.grMCP <- cv.grpregOverlap(X, y, group, penalty = 'grMCP', group.multiplier=A$group.multiplier, family = 'binomial',trace = TRUE)
+cvfit.grSCAD <- cv.grpregOverlap(X, y, group, penalty = 'grSCAD', group.multiplier=weight, family = 'binomial',trace = TRUE)
+
 
 exp(coef(cvfit.grLasso))
-which(coef(cvfit.grLasso)!=0)
 summary(cvfit.grLasso)
 
 exp(coef(cvfit.grMCP))
-which(coef(cvfit.grMCP)!=0)
 summary(cvfit.grMCP)
 
 exp(coef(cvfit.grSCAD))
-which(coef(cvfit.grSCAD)!=0)
 summary(cvfit.grSCAD)
 
