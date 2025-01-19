@@ -24,4 +24,5 @@
 16. Diabetes
 17. COPD/asthma
 18. Dyslipidemia
+
 19-28: Age, History of bleeding, Stroke, Anemia, Sex, Renal diseases, liver diseases, Malignancy, Antiplatelets, NSAIDs
